@@ -60,46 +60,43 @@ class Sh_member_variables_ext {
 	    $this->EE->load->library('table');
 
 	    $vars = array();
-
 	    $vars['settings'] = array();
 
 	    // get the member groups
 	    $this->EE->load->model('member_model');
 	    $groups = $this->EE->member_model->get_member_groups();
+
+	    // build a dropdown list of groups
 	    foreach($groups->result() as $group)
 	    {
-	    	// see if there's a saved setting for this group
-	    	$current_setting = "";
-	    	if (isset($current['group_'.$group->group_id]))
-	    	{
-	    		$current_setting = $current['group_'.$group->group_id];
-	    	}
-
-	    	$vars['settings']['groups'][] = array(
-				'id'   => $group->group_id,
-				'name' => $group->group_title,
-				'value' => form_input('group_' . $group->group_id, $current_setting)
-	    	);
+			$vars['settings']['groups'][$group->group_id] = $group->group_title;
 	    }
-	    //print_r($vars);
-/*
-	    $max_length = isset($current['max_link_length']) ? $current['max_link_length'] : 20;
 
-	    $trunc_cp_links = (isset($current['truncate_cp_links'])) ? $current['truncate_cp_links'] : 'no';
+		$vars['settings']['items'] = array();
 
-	    $yes_no_options = array(
-	        'yes'   => lang('yes'),
-	        'no'    => lang('no')
+		$next_id = 0;
+	    if (isset($current))
+	    {
+			$next_id = count($current);
+
+		    foreach ($current as $id => $item)
+		    {
+			    $vars['settings']['items'][] = array(
+			    	'group_id' => form_dropdown($id.'[group_id]', $vars['settings']['groups'], $item['group_id']),
+			    	'name' => form_input($id.'[name]', $item['name']),
+			    	'value' => form_input($id.'[value]', $item['value']),
+			    	'tag' => '{' . $item['value'] . '}',
+			    );
+			}
+		}
+
+	    $vars['settings']['new_item'] = array(
+		    'group_id' => form_dropdown('item'.$next_id.'[group_id]', $vars['settings']['groups']),
+	    	'name' => form_input('item'.$next_id.'[name]', ''),
+	    	'value' => form_input('item'.$next_id.'[value]', ''),
+	    	'tag' => ''
 	    );
 
-	    $vars['settings'] = array(
-	        'max_link_length'   => form_input('max_link_length', $max_length),
-	        'truncate_cp_links' => form_dropdown(
-	                    'truncate_cp_links',
-	                    $yes_no_options,
-	                    $trunc_cp_links)
-	        );
-*/
 		$this->settings = $vars['settings'];
 	    return $this->EE->load->view('index', $vars, TRUE);
 	}
@@ -124,21 +121,14 @@ class Sh_member_variables_ext {
 
 	    $this->EE->lang->loadfile('sh_member_variables');
 
-	    /*
-	    $len = $this->EE->input->post('max_link_length');
-
-	    if ( ! is_numeric($len) OR $len <= 0)
-	    {
-	        $this->EE->session->set_flashdata(
-	                'message_failure',
-	                sprintf($this->EE->lang->line('max_link_length_range'),
-	                    $len)
-	        );
-	        $this->EE->functions->redirect(
-	            BASE.AMP.'C=addons_extensions'.AMP.'M=extension_settings'.AMP.'file=sh_member_variables'
-	        );
-	    }
-	    */
+	  	// don't save any items that don't have a name
+	  	foreach ($_POST as $id => $item)
+	  	{
+	  		if (trim($item['name']) == '')
+	  		{
+	  			unset($_POST[$id]);
+	  		}
+	  	}
 
 	    $this->EE->db->where('class', __CLASS__);
 	    $this->EE->db->update('extensions', array('settings' => serialize($_POST)));
@@ -198,20 +188,24 @@ class Sh_member_variables_ext {
 		// Are they an admin regardless of member group?
 		if ($SESS->userdata['can_access_cp'] == 'y')
 		{
-			$new_gvars['gv:is_site_admin'] = TRUE;
+			$new_gvars['is_site_admin'] = TRUE;
 		} else {
-			$new_gvars['gv:is_site_admin'] = FALSE;
+			$new_gvars['is_site_admin'] = FALSE;
 		}
 
-		$your_group = 'group_' . $SESS->userdata['group_id'];
-
-		// if there are settings for the group of the currently logged in user
-		if (isset($this->settings[$your_group]))
+		if ($SESS->userdata['can_access_edit'] == 'y')
 		{
-			$vars = $this->parse_values($this->settings[$your_group]);
-			foreach ($vars as $name => $value)
+			$new_gvars['can_edit'] = TRUE;
+		} else {
+			$new_gvars['can_edit'] = FALSE;
+		}
+
+		// check the settings for any that are assigned to my group
+		foreach ($this->settings as $setting)
+		{
+			if ($setting['group_id'] == $SESS->userdata['group_id'])
 			{
-				$new_gvars[$name] = $value; // add a global variable for each one
+				$new_gvars[$setting['name']] = $setting['value'];
 			}
 		}
 
@@ -252,36 +246,6 @@ class Sh_member_variables_ext {
 		}
 	}	
 	
-	/**
-	 * Parse Values
-	 *
-	 * This is a private function that parses a comma separated list of settings
-	 * and returns an array of name => value pairs.
-	 *
-	 * $settings = "a=b,c=d"
-	 * @return array / valse if none
-	 */
-	private function parse_values($settings = '')
-	{
-		if ($settings != '')
-		{
-			$settings = explode(',', $settings);
-
-			$vars = array();
-			foreach ($settings as $setting)
-			{
-				$setting = explode('=', $setting);
-
-				if (count($setting) == 2)
-				{
-					$vars[$setting[0]] = $setting[1]; 
-				}
-			}
-			return $vars;
-		} else {
-			return false;
-		}
-	}
 	// ----------------------------------------------------------------------
 }
 

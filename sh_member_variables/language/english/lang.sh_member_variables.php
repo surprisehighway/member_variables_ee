@@ -2,10 +2,13 @@
 
 $lang = array(
 // Start inserting custom language keys/values here
-	'group' => 'Group',
-	'group_id' => 'ID',
-	'variables' => 'Global Variables',
+	'group'               => 'Member Group',
+	'group_id'            => 'ID',
+	'variables'           => 'Global Variables',
+	'variable'            => 'Variable Name',
+	'value'               => 'Variable Value',
 	'preferences_updated' => 'Your member variables have been saved.',
+	'tag'                 => 'Tag',
 );
 
 /* End of file lang.sh_member_variables.php */
