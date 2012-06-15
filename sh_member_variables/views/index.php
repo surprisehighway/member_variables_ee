@@ -1,6 +1,25 @@
 <?=form_open('C=addons_extensions'.AMP.'M=save_extension_settings'.AMP.'file=sh_member_variables');?>
 
 <?php
+echo "<pre>";
+//print_r($settings['new_var']);
+echo "</pre>";
+
+$headings = array_merge(
+	array(lang('variable')),
+	array(lang('tag')),
+	$settings['groups']
+);
+
+$this->table->set_template($cp_pad_table_template);
+$this->table->set_heading($headings);
+
+$this->table->add_row(
+	$settings['new_var']
+);
+
+echo $this->table->generate();
+
 
 $this->table->set_template($cp_pad_table_template);
 $this->table->set_heading(

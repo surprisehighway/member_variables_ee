@@ -97,6 +97,17 @@ class Sh_member_variables_ext {
 	    	'tag' => ''
 	    );
 
+	   	$vars['settings']['new_var'] = array(
+	    	'name' => form_input('item'.$next_id.'[name]', ''),
+	    	'tag' => ''
+	    );
+
+	    foreach ($vars['settings']['groups'] as $group) 
+	    {
+
+	    	$vars['settings']['new_var'][$group] = form_input('item'.$next_id.'[value]', '');
+	    }
+
 		$this->settings = $vars['settings'];
 	    return $this->EE->load->view('index', $vars, TRUE);
 	}
